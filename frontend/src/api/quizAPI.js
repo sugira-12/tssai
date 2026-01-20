@@ -1,10 +1,10 @@
-const BASE_URL = "http://127.0.0.1:8000/quiz";
+const BACKEND_URL = "http://localhost:8000";
 
 export async function generateQuiz(module_id) {
-  const response = await fetch(`${BASE_URL}/generate`, {
+  const res = await fetch(`${BACKEND_URL}/quiz/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ module_id }),
   });
-  return await response.json();
+  return res.json();
 }

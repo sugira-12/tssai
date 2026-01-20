@@ -5,27 +5,22 @@ function ChatUI() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
 
-  const handleAsk = async () => {
-    if (!question) return;
-    const res = await askQuestion(question, "sample_doc.pdf"); // stub doc_id
+  async function handleAsk() {
+    const res = await askQuestion(question, "sample_doc.pdf"); // doc_id from uploaded PDF
     setAnswer(res.answer);
-  };
+  }
 
   return (
     <div>
-      <h2>Ask a Question</h2>
+      <h2>Chat with TVET AI</h2>
       <input
         type="text"
         value={question}
-        placeholder="Enter your question..."
         onChange={(e) => setQuestion(e.target.value)}
-        style={{ width: "70%" }}
+        placeholder="Ask a question..."
       />
       <button onClick={handleAsk}>Ask</button>
-      <div style={{ marginTop: "10px" }}>
-        <strong>Answer:</strong>
-        <p>{answer}</p>
-      </div>
+      <div>{answer && <p>Answer: {answer}</p>}</div>
     </div>
   );
 }
