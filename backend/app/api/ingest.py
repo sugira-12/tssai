@@ -1,38 +1,36 @@
-# backend/app/api/ingest.py
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File
 from pathlib import Path
-import shutil
+from services.ocr import extract_text
+from services.embedding import compute_embeddings
+from services.vectorstore import store_chunks
 
-# Create FastAPI router
 router = APIRouter()
 
-# Directory to store uploaded PDFs
 UPLOAD_DIR = Path("data/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-@router.post("/document", summary="Upload a PDF document")
+@router.post("/document")
 async def upload_document(file: UploadFile = File(...)):
-    """
-    Upload a PDF file, save it locally, and return the path.
-    """
-    # Only allow PDF files
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
-
-    # Define file path
+    # Save uploaded PDF
     file_path = UPLOAD_DIR / file.filename
-
-    # Save file safely
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
-    finally:
-        file.file.close()
-
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+    
+    # Extract text
+    text = extract_text(file_path)
+    
+    # Chunk text (500 characters per chunk)
+    chunks = [text[i:i+500] for i in range(0, len(text), 500)]
+    
+    # Compute embeddings (stub)
+    embeddings = compute_embeddings(chunks)
+    
+    # Store chunks + embeddings in vectorstore
+    store_chunks(chunks, embeddings, file.filename)
+    
     return {
         "filename": file.filename,
         "path": str(file_path),
+        "chunks": len(chunks),
         "message": "File uploaded successfully."
     }

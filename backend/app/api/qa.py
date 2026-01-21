@@ -5,25 +5,19 @@ from services.vectorstore import load_chunks
 
 router = APIRouter()
 
-# Define request body
 class QARequest(BaseModel):
     question: str
     doc_id: str
 
 @router.post("/")
-def ask_question(request: QARequest):
-    """
-    Answer a question based on the uploaded document.
-    """
+def ask_question(payload: QARequest):
     store = load_chunks()
-    doc_id = request.doc_id
 
-    if doc_id not in store:
+    if payload.doc_id not in store:
         return {"answer": "Document not found", "source": None}
 
-    # Simple RAG: return first chunk as answer
-    top_chunk = store[doc_id][0]
+    top_chunk = store[payload.doc_id][0]["chunk"]
     return {
-        "answer": top_chunk["chunk"][:200] + "...",  # truncate for preview
-        "source": doc_id
+        "answer": top_chunk[:300] + "...",
+        "source": payload.doc_id
     }

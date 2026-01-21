@@ -1,24 +1,29 @@
+# backend/services/vectorstore.py
 from pathlib import Path
 import pickle
 
-VECTOR_DB = Path("data/vectorstore.pkl")
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(exist_ok=True)
 
-store = {}  # In-memory store
+VECTOR_DB = DATA_DIR / "vectorstore.pkl"
 
-def store_chunks(chunks, embeddings, doc_id):
-    """
-    Store chunks and embeddings in memory or persist to file.
-    """
-    global store
-    store[doc_id] = [{"chunk": c, "embedding": e} for c, e in zip(chunks, embeddings)]
-    # Persist to disk
+def _load_store():
+    if VECTOR_DB.exists():
+        with open(VECTOR_DB, "rb") as f:
+            return pickle.load(f)
+    return {}
+
+def _save_store(store):
     with open(VECTOR_DB, "wb") as f:
         pickle.dump(store, f)
 
+def store_chunks(chunks, embeddings, doc_id):
+    store = _load_store()
+    store[doc_id] = [
+        {"chunk": c, "embedding": e}
+        for c, e in zip(chunks, embeddings)
+    ]
+    _save_store(store)
+
 def load_chunks():
-    global store
-    if VECTOR_DB.exists():
-        import pickle
-        with open(VECTOR_DB, "rb") as f:
-            store = pickle.load(f)
-    return store
+    return _load_store()
